@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CONTROL Group – Privacy Pattern Network</title>
+  <script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+    #infoBox {
+      width: 420px;
+      height: 480px;
+      padding: 20px;
+      background: #f7f7f7;
+      border: 6px solid #a12332; 
+      overflow-y: auto;
+      margin: 40px 0 0 40px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+    #infoBox img {
+      width: 100%;
+      height: auto;
+      max-height: 380px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+}
+
+    #cy {
+      flex: 1;
+      height: 100vh;
+      background: #ffffff;
+    }
+    h3 { margin: 0 0 10px; }
+    p { margin: 0 0 10px; font-size: 14px; }
+
+    #zoomSlider {
+      width: 120px;
+      accent-color: #41424a
+    }
+  </style>
+</head>
+<body>
+    <button onclick="window.location.href='Level1.html'" style="position:absolute; top:10px; right:10px; z-index:10;">← Back to Overview</button>
+  <div id="infoBox">
+  <img id="infoImage" src="images/control.png" alt="image/control.png" />
+  <h3 id="infoTitle">Click on a pattern</h3>
+  <p id="infoDescription">You'll see the description here.</p>
+</div>
+
+  <div id="cy"></div>
+
+  <div style="position: fixed; top: 60px; right: 20px; background: white; padding: 6px 10px; border-radius: 6px; box-shadow: 0 0 6px rgba(0,0,0,0.2); font-family: sans-serif; z-index: 1000;">
+    <label for="zoomSlider">Zoom / Granularity: <span id="zoomValue">1</span></label>
+    <input type="range" id="zoomSlider" min="0.5" max="3" step="0.1" value="1" />
+  </div>
+
+  <script>
+    const patternDescriptions = {
+      c1: 'Services of a controller may require users to sign contracts that stipulate their obligations and processing purposes for which users must consent to use the service. This ensure that users can trust the controller as it is bound to the contract it signs.',
+      c2: 'Use encryption in such a way that the service provider cannot decrypt the users information because the user manages the keys.',
+      c3: 'Allow users to retroactively configure privacy for location information with respect to the contents contextual privacy requirements.',
+      c4: 'This pattern describes how controllers can inform users whenever they intend to collect or otherwise use a users personal data.',
+      c5: 'A crucial element in privacy protection is ensuring that all sensitive processing is preceded by the acquisition of freely given, informed, specific, and explicit consent.',
+      c6: 'Give users the possibility to define a privacy level from a range of options each time they share content.',
+      c7: 'This pattern suggest that services should support selective disclosure by adapting their functionality to the amount of personal data the user is comfortable sharing.',
+      c8: 'Users may actively choose to automatically provide updates when they want to share presence information, to increase bobth the relevance of, and control over, their sharing.',
+      c9: 'Subjects keep control on their personal data that are stored on a personl device.',
+      c10: 'Over time, build users preferences from a privacy-preserving default semi-automatically, through opt-in/opt-out, semantics, and informed solicitations.',
+      c11: 'Let users share selectively (push) and make available (pull) specific information to predefined groups or individuals.',
+      c12: 'The controller has to obtain additional specific, informed, explicit, and freely given consent before outsourcing data processing to a third party.',
+      c13: 'Controllers require consent to be given willingly and specifically when in any way processing the personal data of theirs users.',
+      c14: 'Allow users to decide granularly what functions they consent to before the function is used.',
+      c15: 'Users are more willing to contribute valuable input when they can do so without leaking personal data, or perceive an equal or greater exchange in value either monetarily or socially.',
+      c16: 'Allow users to specify who may access the content they generate, both during and after submission.',
+      c17: 'The Single Point of Contact is a security authority who protects the privacy and security of sensitive data stored online by validating the authority of requests and ensuring secure communication channels.',
+      c18: 'Let users filter out some or all personal information they would otherwise provide to a service.',
+      c19: 'Let users benefit according to the contributions they make.',
+      c20: 'Enable sharing and re-sharing without wide public visibility or cumbersome authenticated access control.',
+      c21: 'By default, isolate users to a selection of social connections in a user-defined circle of trust. Allow them to expand this circle or create new ones on the existing members.',
+      c22: 'Give users some benefits in exchange for providing information or content.'
+    };
+
+    const patternImages = {
+        c1: "images/control1.png",
+        c2: "images/a2encryption.png",
+        c3: "images/a3decoupling.png",
+        c4: "images/a4informed.png",
+        c5: "images/a5lawful.png",
+        c6: "images/a6discouraging.png",
+        c7: "images/a7selectivedisclosure.png",
+        c8: "images/a8active.png",
+        c9: "images/a9personaldata.png",
+        c10: "images/a10negotiation.png",
+        c11:"images/a11levelcontrol.png",
+        c12: "images/a12outsourcing.png",
+        c13:"images/a13obtainingexp.png",
+        c14: "images/a14enable.png",
+        c15: "images/a15incentivized.png",
+        c16: "images/a16selectivecontrol.png",
+        c17: "images/a17singlecontact.png",
+        c18: "images/a18masquerade.png",
+        c19: "images/a19reciprocity.png",
+        c20:"images/a20privatelink.png",
+        c21: "images/a21buddylist.png",
+        c22: "images/a22payback.png",
+
+    };
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: [
+        // Nodes
+        { data: { id: 'c1', label: 'Sign an Agreement to Solve Lack of Trust on the Use of Private Data Context' } },
+        { data: { id: 'c2', label: 'Encryption with user-managed keys' } },
+        { data: { id: 'c3', label: 'Decoupling (Content) and location information visibility' } },
+        { data: { id: 'c4', label: 'Informed Consent for Web-based Transactions' } },
+        { data: { id: 'c5', label: 'Lawful Consent' } },
+        { data: { id: 'c6', label: 'Discouraging blanket strategies' } },
+        { data: { id: 'c7', label: '(Support) Selective Disclosure' } },
+        { data: { id: 'c8', label: 'Active broadcast of presence' } },
+        { data: { id: 'c9', label: 'Personal Data Store' } },
+        { data: { id: 'c10', label: 'Negotiation of Privacy Policy' } },
+        { data: { id: 'c11', label: 'Reasonable Level of Control' } },
+        { data: { id: 'c12', label: 'Outsourcing (with consent)' } },
+        { data: { id: 'c13', label: 'Obtaining Explicit Consent' } },
+        { data: { id: 'c14', label: 'Enable/Disable Functions' } },
+        { data: { id: 'c15', label: 'Incentivized Participation' } },
+        { data: { id: 'c16', label: 'Selective access control' } },
+        { data: { id: 'c17', label: 'Single Point of Contact' } },
+        { data: { id: 'c18', label: 'Masquerade' } },
+        { data: { id: 'c19', label: 'Reciprocity' } },
+        { data: { id: 'c20', label: 'Private Link' } },
+        { data: { id: 'c21', label: 'Buddy List' } },
+        { data: { id: 'c22', label: 'Pay Back' } },
+
+        // Edges
+        { data: { id: 'e1_13', source: 'c1', target: 'c13' } },
+{ data: { id: 'e3_5', source: 'c3', target: 'c5' } },
+{ data: { id: 'e3_6', source: 'c3', target: 'c6' } },
+{ data: { id: 'e3_10', source: 'c3', target: 'c10' } },
+{ data: { id: 'e3_18', source: 'c3', target: 'c18' } },
+{ data: { id: 'e3_11', source: 'c3', target: 'c11' } },
+{ data: { id: 'e3_20', source: 'c3', target: 'c20' } },
+{ data: { id: 'e3_21', source: 'c3', target: 'c21' } },
+{ data: { id: 'e3_16', source: 'c3', target: 'c16' } },
+{ data: { id: 'e4_13', source: 'c4', target: 'c13' } },
+{ data: { id: 'e1_5', source: 'c1', target: 'c5' } },
+{ data: { id: 'e4_5', source: 'c4', target: 'c5' } },
+{ data: { id: 'e5_13', source: 'c5', target: 'c13' } },
+{ data: { id: 'e6_10', source: 'c6', target: 'c10' } },
+{ data: { id: 'e6_18', source: 'c6', target: 'c18' } },
+{ data: { id: 'e6_20', source: 'c6', target: 'c20' } },
+{ data: { id: 'e6_11', source: 'c6', target: 'c11' } },
+{ data: { id: 'e6_21', source: 'c6', target: 'c21' } },
+{ data: { id: 'e6_16', source: 'c6', target: 'c16' } },
+{ data: { id: 'e7_3', source: 'c7', target: 'c3' } },
+{ data: { id: 'e7_5', source: 'c7', target: 'c5' } },
+{ data: { id: 'e7_6', source: 'c7', target: 'c6' } },
+{ data: { id: 'e7_10', source: 'c7', target: 'c10' } },
+{ data: { id: 'e7_11', source: 'c7', target: 'c11' } },
+{ data: { id: 'e7_14', source: 'c7', target: 'c14' } },
+{ data: { id: 'e7_16', source: 'c7', target: 'c16' } },
+{ data: { id: 'e7_18', source: 'c7', target: 'c18' } },
+{ data: { id: 'e7_20', source: 'c7', target: 'c20' } },
+{ data: { id: 'e7_21', source: 'c7', target: 'c21' } },
+{ data: { id: 'e8_5', source: 'c8', target: 'c5' } },
+{ data: { id: 'e8_11', source: 'c8', target: 'c11' } },
+{ data: { id: 'e8_18', source: 'c8', target: 'c18' } },
+{ data: { id: 'e8_20', source: 'c8', target: 'c20' } },
+{ data: { id: 'e10_5', source: 'c10', target: 'c5' } },
+{ data: { id: 'e10_11', source: 'c10', target: 'c11' } },
+{ data: { id: 'e10_14', source: 'c10', target: 'c14' } },
+{ data: { id: 'e10_18', source: 'c10', target: 'c18' } },
+{ data: { id: 'e10_20', source: 'c10', target: 'c20' } },
+{ data: { id: 'e11_18', source: 'c11', target: 'c18' } },
+{ data: { id: 'e11_20', source: 'c11', target: 'c20' } },
+{ data: { id: 'e12_5', source: 'c12', target: 'c5' } },
+{ data: { id: 'e14_5', source: 'c14', target: 'c5' } },
+{ data: { id: 'e14_18', source: 'c14', target: 'c18' } },
+{ data: { id: 'e14_20', source: 'c14', target: 'c20' } },
+{ data: { id: 'e15_5', source: 'c15', target: 'c5' } },
+{ data: { id: 'e15_19', source: 'c15', target: 'c19' } },
+{ data: { id: 'e15_22', source: 'c15', target: 'c22' } },
+{ data: { id: 'e16_5', source: 'c16', target: 'c5' } },
+{ data: { id: 'e16_11', source: 'c16', target: 'c11' } },
+{ data: { id: 'e16_18', source: 'c16', target: 'c18' } },
+{ data: { id: 'e16_20', source: 'c16', target: 'c20' } },
+{ data: { id: 'e17_5', source: 'c17', target: 'c5' } },
+{ data: { id: 'e18_19', source: 'c18', target: 'c19' } },
+{ data: { id: 'e18_20', source: 'c18', target: 'c20' } },
+{ data: { id: 'e18_21', source: 'c18', target: 'c21' } },
+{ data: { id: 'e19_21', source: 'c19', target: 'c21' } },
+{ data: { id: 'e19_22', source: 'c19', target: 'c22' } },
+{ data: { id: 'e20_21', source: 'c20', target: 'c21' } }
+      ],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'background-color': 'grey',
+            'color': 'black',
+            'text-valign': 'bottom',
+            'text-halign': 'center',
+            'text-margin-y': 8,
+            'width': 12,
+            'height': 12,
+            'font-size': 10,
+            'text-outline-color': 'grey',
+            'text-outline-width': 0
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 1,
+            'line-color': '#e0e0e0',
+            
+            'target-arrow-color': '#e0e0e0',
+            'curve-style': 'bezier'
+          }
+        },
+        {
+          selector: '.highlight',
+          style: {
+            'background-color': '#a12332',
+            'text-outline-color': '#a12332'
+          }
+        },
+        {
+          selector: '.linkHighlight',
+          style: {
+            'line-color': '#a12332',
+            'width': 2
+          }
+        },
+        {
+  selector: 'node.highlight',
+  style: {
+    'border-width': 4,
+    'border-color': '#a12332',     // o cualquier color según el grupo
+    'border-opacity': 1,
+    'background-color': '#ffffff', // blanco al centro
+    'background-opacity': 1,
+    'overlay-padding': 6,
+    'overlay-color': '#ffffff',
+    'overlay-opacity': 0
+  }
+}
+
+      ],
+      layout: {
+        name: 'cose',
+  idealEdgeLength: 150,
+  nodeRepulsion: 800000,
+  idealEdgeLength: 100,
+  gravity: 80,
+  numIter: 1000,
+  initialTemp: 200,
+  coolingFactor: 0.95,
+  animate: true
+      },
+
+      userZoomingEnabled: true,
+      userPanningEnabled: true,
+      boxSelectionEnabled: true,
+      autoungrabify: false
+    });
+
+    const zoomSlider = document.getElementById("zoomSlider");
+    const zoomValue = document.getElementById("zoomValue");
+
+    zoomSlider.addEventListener("input", function () {
+      const zoomLevel = parseFloat(this.value);
+      cy.zoom(zoomLevel);
+      cy.center(); // opcional: centra el grafo cada vez que haces zoom
+      zoomValue.textContent = zoomLevel.toFixed(1);
+    });
+
+    const infoBox = document.getElementById('infoBox');
+
+   cy.on('mouseover', 'node', function(evt) {
+  const id = evt.target.id();
+  const node = cy.getElementById(id);
+
+  // Limpiar resaltado anterior
+  cy.elements().removeClass('highlight linkHighlight');
+
+  // Resaltar nodo actual y sus conexiones
+  node.addClass('highlight');
+  node.connectedEdges().addClass('linkHighlight');
+  node.connectedEdges().connectedNodes().addClass('highlight');
+
+  // Actualizar la imagen, título y descripción
+  const title = node.data('label');
+  const desc = patternDescriptions[id] || "No description.";
+  const image = patternImages[id] || "images/default.png";
+
+  document.getElementById("infoTitle").innerText = title;
+  document.getElementById("infoDescription").innerText = desc;
+  document.getElementById("infoImage").src = image;
+});
+
+
+cy.on('mouseout', 'node', function() {
+  
+  // Elimina solo el resaltado visual, pero deja el infoBox igual
+  cy.elements().removeClass('highlight linkHighlight');
+});
+
+  </script>
+</body>
+</html>

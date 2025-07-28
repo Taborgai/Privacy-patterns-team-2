@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>INFORM Group – Privacy Pattern Network</title>
+  <script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+    #infoBox {
+    
+      width: 420px;
+      height: 480px;
+      padding: 20px;
+      background: #ffffff;
+      border: 6px solid #e67e22;
+      overflow-y: auto;
+      margin: 40px 0 0 40px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+        #infoBox img {
+      width: 100%;
+      height: auto;
+      max-height: 380px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 10px;
+}
+
+    #cy {
+      flex: 1;
+      height: 100vh;
+      background: #ffffff;
+    }
+    h3 { margin: 0 0 10px; }
+    p { margin: 0 0 10px; font-size: 14px; }
+
+     #zoomSlider {
+      width: 120px;
+      accent-color: #41424a
+    }
+  </style>
+</head>
+<body>
+  <button onclick="window.location.href='level1.html'" style="position:absolute; top:10px; right:10px; z-index:10;">← Back to Overview</button>
+  <div id="infoBox">
+  <img id="infoImage" src="images/inform.png" alt="Pattern image" />
+  <h3 id="infoTitle">Click on a pattern</h3>
+  <p id="infoDescription">You'll see the description here.</p>
+</div>
+
+  <div id="cy"></div>
+
+  <div style="position: fixed; top: 60px; right: 20px; background: white; padding: 6px 10px; border-radius: 6px; box-shadow: 0 0 6px rgba(0,0,0,0.2); font-family: sans-serif; z-index: 1000;">
+    <label for="zoomSlider">Zoom / Granularity: <span id="zoomValue">1</span></label>
+    <input type="range" id="zoomSlider" min="0.5" max="3" step="0.1" value="1" />
+  </div>
+
+  <script>
+    const patternDescriptions = {
+      i1: 'Inform users about the potentially identifying effects of information aggregation to prevent them from unknowingly endangering their privacy.',
+      i2: 'This pattern describes how controllers can inform users whenever they intend to collect or otherwise use a users personal data.',
+      i3: 'Use privacy policies which consist of standarized and extensible vocabulary and data element sets, both of which user agents should be aware of, in order to streamline their review by eliminating redundancies.',
+      i4: 'Prevent accidental automatic disclosure of personal information.',
+      i5: 'Provide feedback about who a user will disclose their information to using certain privacy settings before that information is actually published.',
+      i6: 'A visual highlight provided by an authority which signals the extend to which given privacy criteria are fulfilled. It should be clearly placed and easily found, with links to additional information.',
+      i7: 'Ensure that unauthorized access and processing of personal data is detected and reported to the supervisory authority and any sufficiently affected users withoud any undue delay.',
+      i8: 'Prevent users from being disenfranchised by their lack of familiarity with the policies, potencial risks, and their agency within processing.',
+      i9: 'Provide standardizes contextual policy information on the nature and risks of disclosure through tooltips.',
+      i10: 'Ensure that users maintain healthy authentication habits through awareness and understanding.',
+      i11: 'Enables the user to better understand the Terms and Conditions presented be a system through summarization. The most important elements therein are condesed into a more concise overview.',
+      i12: 'Supplies the user with privacy feedbacks, especially concerning that which is monitored and accessed, and by whom.',
+      i13: 'Enhance user awareness of privacy policies by automatically converting it into a standardized and easily readable format over a secure channel.',
+      i14: 'Ensure users are informed of the potential privacy consequences of sharing various authenticating data.',
+      i15: 'Use consistent icons in place of policy aspects. The icons should convey these aspects reliably, without allowing room for misinterpretation once explained to the user.',
+      i16: 'Controllers must provide unavoidable notice of user implicit consent to the processing of their dara, where reasonable to do so.',
+      i17: 'Establish user awareness of the risks inherent in the disclosure of their data, whether to the controller themselves or to other users.',
+      i18: 'Icons are capable of conveying information more quickly than a document, and are therefore a useful way to augment policies.',
+      i19: 'Inform users of content where other users or unauthenticated persons having accessed the same content are listed, and may access any further disclosures.',
+      i20: 'Allow users to specify what privacy preferences they have and non-intrusively bring policy mismatches to their attention.',
+      i21: 'Ensure that the content of privacy related information provided to the user is worded carefully, maintaining both attention and understanding.',
+      i22: 'Make privacy policies easier for users to understand by layering detail behind successively more concise and summarized inforamtion.',
+      i23: 'The goal of this display is to provide the user infomation about why what information by whom is requested. It should be used whenever personal data is required from the user.',
+      i24: 'Provide visual cues in standardized colors about privacy policies and preferences to help convey information to users more quickly.',
+      i25: 'Proactively provide continual, recurring notice to consented users or repeating access to their personal data, including tracking, storage, or redistribution.',
+      i26: 'In order for users to see what information a controller has about them, they can be provided with a detailed tabular overview of that data upon request.',
+      i27: 'An informational privacy dashboard can provide collected summaries of the collected or processed personal data for a particular user.',
+      i28: 'Prevent suspicious access to user data through alerts and authenticate through multiple factors upon potential compromise of an account.',
+      i29: 'User need to be informed about how visible data about them is, and what may be derived from that data. This allows them to reconsider what they are comfortable about sharing, and take action if desired.',
+      i30: 'Provide unobtrusive, non-modal, continuous notice when personal data is being accessed to increase awareness of real-time tracking.',
+      i31: 'Disclosure awareness is needed to adequately manage digital identity. Provide the user of a system with a high level reflection on what personal data the system knows about, what access is given to others, and what kind of personal data can be deducted.',
+      i32: 'Standardize warning labels similar to nutrition information to quickly inform users about privacy policies and preferences.',
+      i33: 'A privacy policy which is hard to understand by general audience is summarized and translated into commonly agreed visual icons. A privacy icon is word a thousand-word policy."'
+    };
+        const patternImages = {
+        i1: "images/i.1.jpeg",
+        i2: "images/i.2.jpeg",
+        i3: "images/i.3.jpeg",
+        i4: "images/i.4.jpeg",
+        i5: "images/i.5.jpeg",
+        i6: "images/i.6.jpeg",
+        i7: "images/i.7.jpeg", 
+        i8: "images/i.8.jpeg", 
+        i9: "images/i.9.jpeg",
+        i10: "images/i.10.jpeg",
+        i11: "images/i.11.jpeg",
+        i12:"images/i.12,jpeg",
+        i13:"images/i.13.jpeg",
+        i14:"images/i.14.jpeg",
+        i15:"images/i.15.jpeg",
+        i16:"images/i.16.jpeg",
+        i17:"images/i.17.jpeg",
+        i18:"images/i.18.jpeg",
+        i19:"images/i.19.jpeg",
+        i20:"images/i.20.jpeg",
+        i21:"images/i.21.jpeg",
+        i22:"",
+        i23:"",
+        i24:"",
+        i25:"",
+        i26:"",
+        i27:"",
+        i28:"",
+        i29:"",
+        i30:"",
+        i31:"",
+        i32:"",
+        i33: "",
+    };
+
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: [
+        { data: { id: 'i1', label: 'Increasing awareness of information aggregation' } },
+        { data: { id: 'i2', label: 'Informed Consent for Web-based Transactions' } },
+        { data: { id: 'i3', label: 'Platform for Privacy Preferences' } },
+        { data: { id: 'i4', label: 'Preventing mistakes or reducing their impact' } },
+        { data: { id: 'i5', label: 'Impactful Information and Feedback' } },
+        { data: { id: 'i6', label: 'Trust Evaluation of Services Sides' } },
+        { data: { id: 'i7', label: 'Data Breach Notification Pattern' } },
+        { data: { id: 'i8', label: 'Minimal Information Asymmetry' } },
+        { data: { id: 'i9', label: 'Dynamic Privacy Policy Display' } },
+        { data: { id: 'i10', label: 'Informed Secure Passwords' } },
+        { data: { id: 'i11', label: 'Abridged Terms and Conditions' } },
+        { data: { id: 'i12', label: 'Appropriate Privacy Feedback' } },
+        { data: { id: 'i13', label: 'Privacy-Aware Network Client' } },
+        { data: { id: 'i14', label: 'Informed Credential Selection' } },
+        { data: { id: 'i15', label: 'Appropriate Privacy Icons' } },
+        { data: { id: 'i16', label: 'Informed Implicit Consent' } },
+        { data: { id: 'i17', label: 'Privacy Awareness Panel' } },
+        { data: { id: 'i18', label: 'Icons for Privacy Policies' } },
+        { data: { id: 'i19', label: 'Who’s Listening' } },
+        { data: { id: 'i20', label: 'Policy Matching Display' } },
+        { data: { id: 'i21', label: 'Privacy Aware Wording' } },
+        { data: { id: 'i22', label: 'Layered Policy Design' } },
+        { data: { id: 'i23', label: 'Privacy Policy Display' } },
+        { data: { id: 'i24', label: 'Privacy Color Coding' } },
+        { data: { id: 'i25', label: 'Asynchronous notice' } },
+        { data: { id: 'i26', label: 'Personal Data Table' } },
+        { data: { id: 'i27', label: 'Privacy dashboard' } },
+        { data: { id: 'i28', label: 'Unusual Activities' } },
+        { data: { id: 'i29', label: 'Awareness Feed' } },
+        { data: { id: 'i30', label: 'Ambient Notice' } },
+        { data: { id: 'i31', label: 'Privacy Mirrors' } },
+        { data: { id: 'i32', label: 'Privacy Labels' } },
+        { data: { id: 'i33', label: 'Privacy Icons' } },
+{ data: { id: 'e1_6', source: 'i1', target: 'i6' } },
+{ data: { id: 'e1_12', source: 'i1', target: 'i12' } },
+{ data: { id: 'e1_13', source: 'i1', target: 'i13' } },
+{ data: { id: 'e1_15', source: 'i1', target: 'i15' } },
+{ data: { id: 'e1_17', source: 'i1', target: 'i17' } },
+{ data: { id: 'e1_18', source: 'i1', target: 'i18' } },
+{ data: { id: 'e1_21', source: 'i1', target: 'i21' } },
+{ data: { id: 'e1_22', source: 'i1', target: 'i22' } },
+{ data: { id: 'e1_24', source: 'i1', target: 'i24' } },
+{ data: { id: 'e1_27', source: 'i1', target: 'i27' } },
+{ data: { id: 'e1_33', source: 'i1', target: 'i33' } },
+{ data: { id: 'e3_9', source: 'i3', target: 'i9' } },
+{ data: { id: 'e3_13', source: 'i3', target: 'i13' } },
+{ data: { id: 'e3_20', source: 'i3', target: 'i20' } },
+{ data: { id: 'e4_5', source: 'i4', target: 'i5' } },
+{ data: { id: 'e5_6', source: 'i5', target: 'i6' } },
+{ data: { id: 'e5_13', source: 'i5', target: 'i13' } },
+{ data: { id: 'e5_15', source: 'i5', target: 'i15' } },
+{ data: { id: 'e5_17', source: 'i5', target: 'i17' } },
+{ data: { id: 'e5_18', source: 'i5', target: 'i18' } },
+{ data: { id: 'e5_21', source: 'i5', target: 'i21' } },
+{ data: { id: 'e5_22', source: 'i5', target: 'i22' } },
+{ data: { id: 'e5_24', source: 'i5', target: 'i24' } },
+{ data: { id: 'e5_27', source: 'i5', target: 'i27' } },
+{ data: { id: 'e5_28', source: 'i5', target: 'i28' } },
+{ data: { id: 'e5_31', source: 'i5', target: 'i31' } },
+{ data: { id: 'e5_32', source: 'i5', target: 'i32' } },
+{ data: { id: 'e6_20', source: 'i6', target: 'i20' } },
+{ data: { id: 'e6_29', source: 'i6', target: 'i29' } },
+{ data: { id: 'e7_28', source: 'i7', target: 'i28' } },
+{ data: { id: 'e8_26', source: 'i8', target: 'i26' } },
+{ data: { id: 'e8_31', source: 'i8', target: 'i31' } },
+{ data: { id: 'e9_20', source: 'i9', target: 'i20' } },
+{ data: { id: 'e9_23', source: 'i9', target: 'i23' } },
+{ data: { id: 'e10_14', source: 'i10', target: 'i14' } },
+{ data: { id: 'e10_15', source: 'i10', target: 'i15' } },
+{ data: { id: 'e10_18', source: 'i10', target: 'i18' } },
+{ data: { id: 'e10_24', source: 'i10', target: 'i24' } },
+{ data: { id: 'e10_28', source: 'i10', target: 'i28' } },
+{ data: { id: 'e11_13', source: 'i11', target: 'i13' } },
+{ data: { id: 'e11_22', source: 'i11', target: 'i22' } },
+{ data: { id: 'e12_13', source: 'i12', target: 'i13' } },
+{ data: { id: 'e12_15', source: 'i12', target: 'i15' } },
+{ data: { id: 'e12_17', source: 'i12', target: 'i17' } },
+{ data: { id: 'e12_18', source: 'i12', target: 'i18' } },
+{ data: { id: 'e12_19', source: 'i12', target: 'i19' } },
+{ data: { id: 'e12_21', source: 'i12', target: 'i21' } },
+{ data: { id: 'e12_22', source: 'i12', target: 'i22' } },
+{ data: { id: 'e12_24', source: 'i12', target: 'i24' } },
+{ data: { id: 'e12_25', source: 'i12', target: 'i25' } },
+{ data: { id: 'e12_27', source: 'i12', target: 'i27' } },
+{ data: { id: 'e12_30', source: 'i12', target: 'i30' } },
+{ data: { id: 'e12_32', source: 'i12', target: 'i32' } },
+{ data: { id: 'e13_15', source: 'i13', target: 'i15' } },
+{ data: { id: 'e13_18', source: 'i13', target: 'i18' } },
+{ data: { id: 'e13_21', source: 'i13', target: 'i21' } },
+{ data: { id: 'e13_24', source: 'i13', target: 'i24' } },
+{ data: { id: 'e13_29', source: 'i13', target: 'i29' } },
+{ data: { id: 'e13_32', source: 'i13', target: 'i32' } },
+{ data: { id: 'e15_21', source: 'i15', target: 'i21' } },
+{ data: { id: 'e15_22', source: 'i15', target: 'i22' } },
+{ data: { id: 'e15_29', source: 'i15', target: 'i29' } },
+{ data: { id: 'e16_30', source: 'i16', target: 'i30' } },
+{ data: { id: 'e17_18', source: 'i17', target: 'i18' } },
+{ data: { id: 'e17_19', source: 'i17', target: 'i19' } },
+{ data: { id: 'e17_21', source: 'i17', target: 'i21' } },
+{ data: { id: 'e17_22', source: 'i17', target: 'i22' } },
+{ data: { id: 'e17_24', source: 'i17', target: 'i24' } },
+{ data: { id: 'e17_27', source: 'i17', target: 'i27' } },
+{ data: { id: 'e17_32', source: 'i17', target: 'i32' } },
+{ data: { id: 'e18_21', source: 'i18', target: 'i21' } },
+{ data: { id: 'e18_22', source: 'i18', target: 'i22' } },
+{ data: { id: 'e18_24', source: 'i18', target: 'i24' } },
+{ data: { id: 'e18_29', source: 'i18', target: 'i29' } },
+{ data: { id: 'e19_21', source: 'i19', target: 'i21' } },
+{ data: { id: 'e19_22', source: 'i19', target: 'i22' } },
+{ data: { id: 'e19_24', source: 'i19', target: 'i24' } },
+{ data: { id: 'e19_27', source: 'i19', target: 'i27' } },
+{ data: { id: 'e19_32', source: 'i19', target: 'i32' } },
+{ data: { id: 'e20_23', source: 'i20', target: 'i23' } },
+{ data: { id: 'e21_22', source: 'i21', target: 'i22' } },
+{ data: { id: 'e21_23', source: 'i21', target: 'i23' } },
+{ data: { id: 'e21_24', source: 'i21', target: 'i24' } },
+{ data: { id: 'e21_29', source: 'i21', target: 'i29' } },
+{ data: { id: 'e21_32', source: 'i21', target: 'i32' } },
+{ data: { id: 'e22_23', source: 'i22', target: 'i23' } },
+{ data: { id: 'e22_24', source: 'i22', target: 'i24' } },
+{ data: { id: 'e22_29', source: 'i22', target: 'i29' } },
+{ data: { id: 'e22_32', source: 'i22', target: 'i32' } },
+{ data: { id: 'e24_29', source: 'i24', target: 'i29' } },
+{ data: { id: 'e25_30', source: 'i25', target: 'i30' } },
+{ data: { id: 'e27_29', source: 'i27', target: 'i29' } },
+{ data: { id: 'e27_31', source: 'i27', target: 'i31' } },
+{ data: { id: 'e29_32', source: 'i29', target: 'i32' } }
+
+      ],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'background-color': 'grey',
+            'color': 'black',
+            'text-valign': 'bottom',
+            'text-halign': 'center',
+            'width': 12,
+            'height': 12,
+            'font-size': 10,
+            'text-outline-color': 'grey',
+            'text-outline-width': 0
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 1,
+            'line-color': '#ccc',
+            
+            'target-arrow-color': '#ccc',
+            'curve-style': 'bezier'
+          }
+        },
+        {
+          selector: '.highlight',
+          style: {
+            'background-color': '#e67e22',
+            'text-outline-color': '#e67e22'
+          }
+        },
+        {
+          selector: '.linkHighlight',
+          style: {
+            'line-color': '#e67e22',
+            'width': 2
+          }
+        },
+
+        
+  
+    {
+  selector: 'node.highlight',
+  style: {
+    'border-width': 4,
+    'border-color': '#e67e22',     // o cualquier color según el grupo
+    'border-opacity': 1,
+    'background-color': '#ffffff', // blanco al centro
+    'background-opacity': 1,
+    'overlay-padding': 6,
+    'overlay-color': '#ffffff',
+    'overlay-opacity': 0
+  }
+} ],
+
+      layout: {
+        name: 'cose',
+        idealEdgeLength: 150,
+        nodeRepulsion: 800000,
+        gravity: 80,
+        numIter: 1000,
+        initialTemp: 200,
+        coolingFactor: 0.95,
+        animate: true
+      },
+
+      userZoomingEnabled: true,
+      userPanningEnabled: true,
+      boxSelectionEnabled: true,
+      autoungrabify: false
+    });
+ const zoomSlider = document.getElementById("zoomSlider");
+    const zoomValue = document.getElementById("zoomValue");
+
+    zoomSlider.addEventListener("input", function () {
+      const zoomLevel = parseFloat(this.value);
+      cy.zoom(zoomLevel);
+      cy.center(); // opcional: centra el grafo cada vez que haces zoom
+      zoomValue.textContent = zoomLevel.toFixed(1);
+    });
+    
+
+    const infoBox = document.getElementById('infoBox');
+
+   cy.on('mouseover', 'node', function(evt) {
+  const id = evt.target.id();
+  const node = cy.getElementById(id);
+
+  // Limpiar resaltado anterior
+  cy.elements().removeClass('highlight linkHighlight');
+
+  // Resaltar nodo actual y sus conexiones
+  node.addClass('highlight');
+  node.connectedEdges().addClass('linkHighlight');
+  node.connectedEdges().connectedNodes().addClass('highlight');
+
+  // Actualizar la imagen, título y descripción
+  const title = node.data('label');
+  const desc = patternDescriptions[id] || "No description.";
+  const image = patternImages[id] || "images/default.png";
+
+  document.getElementById("infoTitle").innerText = title;
+  document.getElementById("infoDescription").innerText = desc;
+  document.getElementById("infoImage").src = image;
+});
+
+cy.on('mouseout', 'node', function() {
+  
+  // Elimina solo el resaltado visual, pero deja el infoBox igual
+  cy.elements().removeClass('highlight linkHighlight');
+});
+
+  </script>
+</body>
+</html>

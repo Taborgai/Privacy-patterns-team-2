@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ENFORCE Group – Privacy Pattern Network</title>
+  <script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+    #infoBox {
+      width: 420px;
+      height: 480px;
+      padding: 20px;
+      background: #f7f7f7;
+      border: 6px solid #FF2F2F; 
+      overflow-y: auto;
+      margin: 40px 0 0 40px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+    #infoBox img {
+      width: 100%;
+      height: auto;
+      max-height: 380px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 10px;
+}
+
+    #cy {
+      flex: 1;
+      height: 100vh;
+      background: #ffffff;
+    }
+    h3 { margin: 0 0 10px; }
+    p { margin: 0 0 10px; font-size: 14px; }
+
+    #zoomSlider {
+      width: 120px;
+      accent-color: #41424a
+    }
+  </style>
+</head>
+<body>
+    <button onclick="window.location.href='Level1.html'" style="position:absolute; top:10px; right:10px; z-index:10;">← Back to Overview</button>
+  <div id="infoBox">
+  <img id="infoImage" src="images/enforce.png" alt="Pattern image" />
+  <h3 id="infoTitle">Click on a pattern</h3>
+  <p id="infoDescription">You'll see the description here.</p>
+</div>
+
+  <div id="cy"></div>
+
+  <div style="position: fixed; top: 60px; right: 20px; background: white; padding: 6px 10px; border-radius: 6px; box-shadow: 0 0 6px rgba(0,0,0,0.2); font-family: sans-serif; z-index: 1000;">
+    <label for="zoomSlider">Zoom / Granularity: <span id="zoomValue">1</span></label>
+    <input type="range" id="zoomSlider" min="0.5" max="3" step="0.1" value="1" />
+  </div>
+
+  <script>
+    const patternDescriptions = {
+      e1: 'The Do Not Track Pattern makes sure that neither the Identity Provider nor the Identity Broker can learn the relationship between the user and the Service Providers the user us.',
+      e2: 'The impact of personal information in a federation is more than the impact in the federated.',
+      e3: 'The pattern allows obligations relating to data sharing, storing and processing to be transferred and managed when the data is shared between multiple parties.',
+      e4: 'Machine-readable policies are sticked to data to define allowed usage and obligations as it tranvels across multiple parties, enabling users to improve control over their personal information.',
+    };
+
+    const patternImages = {
+        e1: "images/enforce1.png",
+        e2: "images/enforce2.png",
+        e3: "images/enforce3.png",
+        e4: "images/enforce4.png",
+        
+    };
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: [
+        // Nodes
+        { data: { id: 'e1', label: 'Identity Federation Do Not Track Pattern' } },
+        { data: { id: 'e2', label: 'Federated Privacy Impact Assessment' } },
+        { data: { id: 'e3', label: 'Obligation Management' } },
+        { data: { id: 'e4', label: 'Sticky Policies' } },
+      ],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'background-color': 'grey',
+            'color': 'black',
+            'text-valign': 'bottom',
+            'text-halign': 'center',
+            'text-margin-y': 8,
+            'width': 12,
+            'height': 12,
+            'font-size': 8,
+            'text-outline-color': 'grey',
+            'text-outline-width': 0
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 1,
+            'line-color': 'transparent',
+            
+            'target-arrow-color': 'transparent',
+            'curve-style': 'bezier'
+          }
+        },
+        {
+          selector: '.highlight',
+          style: {
+            'background-color': '#7497d0',
+            'text-outline-color': '#7497d0'
+          }
+        },
+        
+        
+        {
+  selector: 'node.highlight',
+  style: {
+    'border-width': 4,
+    'border-color': '#FF2F2F',     // o cualquier color según el grupo
+    'border-opacity': 1,
+    'background-color': '#ffffff', // blanco al centro
+    'background-opacity': 1,
+    'overlay-padding': 6,
+    'overlay-color': '#ffffff',
+    'overlay-opacity': 0
+  }
+}
+
+      ],
+      layout: {
+        name: 'circle',
+  fit: true,               // que se ajuste al contenedor
+  padding: 10,             // menos espacio alrededor
+  avoidOverlap: true,      
+  nodeSpacing: 5,          // más compacto
+  radius: 150,             // círculo más pequeño
+  startAngle: 3 / 2 * Math.PI,  // opcional: empieza arriba
+  clockwise: true,
+  animate: true
+      },
+
+      userZoomingEnabled: true,
+      userPanningEnabled: true,
+      boxSelectionEnabled: true,
+      autoungrabify: false
+    });
+
+    const zoomSlider = document.getElementById("zoomSlider");
+    const zoomValue = document.getElementById("zoomValue");
+
+    zoomSlider.addEventListener("input", function () {
+      const zoomLevel = parseFloat(this.value);
+      cy.zoom(zoomLevel);
+      cy.center(); // opcional: centra el grafo cada vez que haces zoom
+      zoomValue.textContent = zoomLevel.toFixed(1);
+    });
+
+    const infoBox = document.getElementById('infoBox');
+
+   cy.on('mouseover', 'node', function(evt) {
+  const id = evt.target.id();
+  const node = cy.getElementById(id);
+
+  // Limpiar resaltado anterior
+  cy.elements().removeClass('highlight linkHighlight');
+
+  // Resaltar nodo actual y sus conexiones
+  node.addClass('highlight');
+  node.connectedEdges().addClass('linkHighlight');
+  node.connectedEdges().connectedNodes().addClass('highlight');
+
+  // Actualizar la imagen, título y descripción
+  const title = node.data('label');
+  const desc = patternDescriptions[id] || "No description.";
+  const image = patternImages[id] || "images/default.png";
+
+  document.getElementById("infoTitle").innerText = title;
+  document.getElementById("infoDescription").innerText = desc;
+  document.getElementById("infoImage").src = image;
+});
+
+
+cy.on('mouseout', 'node', function() {
+  
+  // Elimina solo el resaltado visual, pero deja el infoBox igual
+  cy.elements().removeClass('highlight linkHighlight');
+});
+
+  </script>
+</body>
+</html>

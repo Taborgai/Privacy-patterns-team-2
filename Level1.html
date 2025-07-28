@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Privacy Pattern Overview</title>
+  <script src="https://unpkg.com/cytoscape@3.23.0/dist/cytoscape.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-wrap: flex;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+    #infoBox {
+      
+      width: 400px;
+      height: 440px;
+      padding: 20px;
+      background: #f7f7f7;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+      margin: 40px 0 0 40px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+    #infoBox img {
+      width: 100%;
+      height: auto;
+       
+      max-height: 380px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+    p {
+      margin: 0;
+      font-size: 14px;
+      text-align: center;
+    }
+    #cy {
+      flex: 1;
+      height: 100vh;
+    }
+
+    #zoomSlider {
+      width: 120px;
+      accent-color: #41424a
+    }
+
+  </style>
+</head>
+<body>
+
+  <div id="infoBox">
+    <img id="infoImage" src="https://via.placeholder.com/300x150?text=Hover+a+group" alt="Group image" />
+    <h3 id="infoTitle">Hover a group</h3>
+    <p id="infoDescription">Move your cursor over a group to see its description.</p>
+  </div>
+  <div id="cy"></div>
+
+
+ <div style="position: fixed; top: 60px; right: 20px; background: white; padding: 6px 10px; border-radius: 6px; box-shadow: 0 0 6px rgba(0,0,0,0.2); font-family: sans-serif; z-index: 1000;">
+    <label for="zoomSlider">Zoom / Granularity: <span id="zoomValue">1</span></label>
+    <input type="range" id="zoomSlider" min="0.5" max="3" step="0.1" value="1" />
+  </div>
+
+
+  <script>
+    const groupData = {
+      control: {
+        description: "This group relates to the ability of users to manage, permit, or deny access to their data.",
+        color: "#a12332",
+        image: "images/control.png"
+        
+      },
+      abstract: {
+        description: "Abstract privacy concerns deal with conceptualizing data at a higher level.",
+        color: "#3c4db5",
+        image: "images/abstract.png"
+      },
+      separate: {
+        description: "Separate group patterns isolate personal data to limit exposure and correlation.",
+        color: "#9b59b6",
+        image: "images/separate.png"
+      },
+      hide: {
+        description: "These patterns obscure or anonymize user data.",
+        color: "#607d8b",
+        image: "images/hide.png"
+      },
+      minimize: {
+        description: "Minimize group reduces the amount of personal data collected or stored.",
+        color: "#4caf50",
+        image: "images/minimize.png"
+      },
+      inform: {
+        description: "Inform group patterns ensure that users are aware of data practices.",
+        color: "#f1c40f",
+        image: "images/inform.png"
+      },
+      enforce: {
+        description: "Enforce group ensures rules and policies are respected and applied.",
+        color: "#e74c3c",
+        image: "images/enforce.png"
+      }
+    };
+
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: [
+        { data: { id: 'control', label: 'CONTROL' } },
+        { data: { id: 'abstract', label: 'ABSTRACT' } },
+        { data: { id: 'separate', label: 'SEPARATE' } },
+        { data: { id: 'hide', label: 'HIDE' } },
+        { data: { id: 'minimize', label: 'MINIMIZE' } },
+        { data: { id: 'inform', label: 'INFORM' } },
+        { data: { id: 'enforce', label: 'ENFORCE' } }
+
+      
+      ],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(label)',
+            'color': '#fff',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '14px',
+            'font-weight': 'bold',
+            'text-outline-width': 2,
+            'text-outline-color': '#000',
+            'shape': 'ellipse',
+            'width': 100,
+            'height': 100
+          }
+        },
+        { selector: 'node[id = "control"]', style: { 'background-color': '#a12332', 'text-outline-color': '#a12332' } },
+        { selector: 'node[id = "abstract"]', style: { 'background-color': '#3c4db5', 'text-outline-color': '#3c4db5' } },
+        { selector: 'node[id = "separate"]', style: { 'background-color': '#9b59b6', 'text-outline-color': '#9b59b6' } },
+        { selector: 'node[id = "hide"]', style: { 'background-color': '#607d8b', 'text-outline-color': '#607d8b' } },
+        { selector: 'node[id = "minimize"]', style: { 'background-color': '#4caf50', 'text-outline-color': '#4caf50' } },
+        { selector: 'node[id = "inform"]', style: { 'background-color': '#f1c40f', 'text-outline-color': '#f1c40f' } },
+        { selector: 'node[id = "enforce"]', style: { 'background-color': '#e74c3c', 'text-outline-color': '#e74c3c' } }
+      ],
+      layout: { name: 'circle' },
+      userZoomingEnabled: true,
+      userPanningEnabled: true,
+      boxSelectionEnabled: false,
+      autoungrabify: true
+    });
+    // Slider Zoom Control
+const zoomSlider = document.getElementById("zoomSlider");
+const zoomValue = document.getElementById("zoomValue");
+
+zoomSlider.addEventListener("input", function () {
+  const zoomLevel = parseFloat(this.value);
+  cy.zoom(zoomLevel);
+  cy.center(); // Opcional: centra el grafo en cada cambio
+  zoomValue.textContent = zoomLevel.toFixed(1);
+});
+
+
+    cy.on('mouseover', 'node', function(evt) {
+      const id = evt.target.id();
+      const data = groupData[id];
+      
+
+      if (data) {
+        document.getElementById('infoTitle').innerText = evt.target.data('label');
+        document.getElementById('infoDescription').innerText = data.description;
+        document.getElementById('infoImage').src = data.image;
+        document.getElementById('infoBox').style.backgroundColor = "#ffffff"; // Fondo blanco
+document.getElementById('infoBox').style.border = `6px solid ${data.color}`; // Borde del color del grupo
+
+      }
+    });
+
+    cy.on('tap', 'node', function(evt) {
+  const id = evt.target.id();
+  if (id === 'control') {
+    window.location.href = 'control.html';
+  } else if (id === 'inform') {
+    window.location.href = 'inform.html';
+  } else if (id === 'abstract') {
+    window.location.href = 'abstract.html';
+  } else if (id === 'hide') {
+    window.location.href = 'hide.html';
+  } else if (id === 'separate') {
+    window.location.href = 'separate.html';
+  } else if (id === 'minimize') {
+    window.location.href = 'minimize.html';
+  } else if (id === 'enforce') {
+    window.location.href = 'enforce.html';
+  }
+});
+
+    
+  </script>
+</body>
+</html>
